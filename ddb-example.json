@@ -1,0 +1,5 @@
+{
+    "userId": <YOUR USER ID HERE>,
+    "token": "<YOUR COBALT AUTH TOKEN HERE>",
+    "gameId": <YOUR CAMPAIGN ID HERE>
+}
