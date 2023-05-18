@@ -13,15 +13,15 @@ if(args.Length == 0) {
     return 1;
 }
 
-(Type Type, CommandAttribute Attribute)? cmdInfo = commands.FirstOrDefault(t => t.Attribute.Name == args[0]);
-if(cmdInfo == null) { PrintHelp(); return 1; }
+(Type Type, CommandAttribute Attribute) cmdInfo = commands.FirstOrDefault(t => t.Attribute.Name == args[0]);
+if(cmdInfo.Type == null) { PrintHelp(); return 1; }
 
 try {
-    var cmd = (ICommand?)Activator.CreateInstance(cmdInfo?.Type!);
+    var cmd = (ICommand?)Activator.CreateInstance(cmdInfo.Type);
     if(cmd == null) { PrintHelp(); Environment.Exit(1); return 1; }
     cmd.Execute(new List<string>(args), null);
 } catch(ArgumentOutOfRangeException e) {
-    PrintShortHelp(cmdInfo?.Attribute!);
+    PrintShortHelp(cmdInfo.Attribute);
     return 2;
 } catch(NotImplementedException _) {
     Console.Error.WriteLine($"{args[0]} not implemented");
