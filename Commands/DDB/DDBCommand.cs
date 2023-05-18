@@ -141,6 +141,7 @@ public class DDBCommand : RPCCommand {
         string text = Char.ToUpper(evt.data.action[0]) + evt.data.action.Substring(1);
         
         string kind = evt.data.rolls[0].rollType;
+        string suffix = "";
         bool suppressKind = false;
         
         if(evt.data.action == "Initiative") {
@@ -153,6 +154,17 @@ public class DDBCommand : RPCCommand {
         var tags = new List<string>();
         if(evt.data.rolls[0].rollKind != "") tags.Add(evt.data.rolls[0].rollKind);
 
+        switch(evt.data.rolls[0].rollKind) {
+            case "advantage":
+                suffix += "kh";
+                break;
+            case "disadvantage":
+                suffix += "kl";
+                break;
+        }
+
+        suffix += evt.data.rolls[0].diceNotation.constant;
+
         return new MessageRPC{
             cmd = "msg",
             type = "dice",
@@ -163,7 +175,7 @@ public class DDBCommand : RPCCommand {
                 tags = tags.Count > 0 ? tags : null,
                 dice = rolls,
                 results = results,
-                modifier = evt.data.rolls[0].diceNotation.constant,
+                suffix = suffix,
                 total = evt.data.rolls[0].result.total
             }
         };

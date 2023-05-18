@@ -26,7 +26,7 @@ public class RollInfo {
     public List<string>? tags { get; set; }
     
     public List<int>? dice { get; set; }
-    public int? modifier { get; set; }
+    public string? suffix { get; set; }
     public List<int>? results { get; set; }
     
     public int? total { get; set; }
