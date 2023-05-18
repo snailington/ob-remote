@@ -111,6 +111,7 @@ public class DDBCommand : RPCCommand {
 
         Console.WriteLine($"incoming from DDB: {evt.eventType}");
         var rpc = TranslateEvent(evt);
+        if(rpc == null) return;
         
         if(localMode) {
             localServer?.Send(JsonSerializer.Serialize(rpc));
