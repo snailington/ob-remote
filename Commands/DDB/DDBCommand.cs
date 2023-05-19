@@ -13,13 +13,7 @@ namespace OBRemote.Commands.DDB;
     ShortHelp = ""
 )]
 public class DDBCommand : RPCCommand {
-    class Config {
-        public string? token { get; set; }
-        public int? userId { get; set; }
-        public int? gameId { get; set; }
-    }
-    
-    Config? config;
+    DDBConfig? config;
     
     WebSocket? ddbSocket;
     
@@ -46,7 +40,7 @@ public class DDBCommand : RPCCommand {
     
     void LoadConfig(string path = "ddb.json") {
         using var file = File.OpenRead(path);
-        config = JsonSerializer.Deserialize<Config>(file);
+        config = JsonSerializer.Deserialize<DDBConfig>(file);
         if(config == null) throw new FormatException("Configuration file error");
     }
     
@@ -100,7 +94,7 @@ public class DDBCommand : RPCCommand {
             throw new FormatException("token response malformed");
         }
         
-        return token.token;
+        return token.token ?? "";
     }
     
     void OnMessage(object? sender, MessageEventArgs args) {
@@ -131,17 +125,18 @@ public class DDBCommand : RPCCommand {
     MessageRPC TranslateRollEvent(DDBEvent evt) {
         var rolls = new List<int>();
         var results = new List<int>();
-        foreach(var set in evt.data.rolls[0].diceNotation.set) {
+        foreach(var set in evt.data!.rolls![0].diceNotation!.set!) {
+            if(set.dice is null) continue;;
             foreach(var dice in set.dice) {
-                rolls.Add(int.Parse(dice.dieType[1..]));
-                results.Add(dice.dieValue);
+                rolls.Add(int.Parse(dice.dieType?[1..]!));
+                results.Add(dice.dieValue ?? 0);
             }
         }
         
         // intrepet the ddb information into magic circle roll kinds
-        string text = Char.ToUpper(evt.data.action[0]) + evt.data.action.Substring(1);
+        string text = Char.ToUpper(evt.data.action![0]) + evt.data.action.Substring(1);
         
-        string kind = evt.data.rolls[0].rollType;
+        string kind = evt.data.rolls[0].rollType ?? "";
         string suffix = "";
         bool suppressKind = false;
         
@@ -153,9 +148,9 @@ public class DDBCommand : RPCCommand {
         else if(kind == "heal") kind = "rest";
 
         var tags = new List<string>();
-        if(evt.data.rolls[0].rollKind != "") tags.Add(evt.data.rolls[0].rollKind);
+        if(evt.data.rolls[0].rollKind != "") tags.Add(evt.data.rolls[0].rollKind ?? "");
 
-        switch(evt.data.rolls[0].rollKind) {
+        switch(evt.data?.rolls[0].rollKind) {
             case "advantage":
                 suffix += "kh";
                 break;
@@ -164,20 +159,25 @@ public class DDBCommand : RPCCommand {
                 break;
         }
 
-        suffix += evt.data.rolls[0].diceNotation.constant;
+        var modifier = evt.data?.rolls[0].diceNotation?.constant ?? 0;
+        suffix += modifier switch {
+            > 0 => "+" + modifier,
+            0 => "",
+            < 0 => "-" + modifier
+        };
 
         return new MessageRPC{
             cmd = "msg",
             type = "dice",
             text = suppressKind ? text : $"{text} {kind}",
-            author = evt.data.context.name,
+            author = evt.data!.context!.name,
             metadata = new RollInfo{
                 kind = kind,
                 tags = tags.Count > 0 ? tags : null,
                 dice = rolls,
                 results = results,
                 suffix = suffix,
-                total = evt.data.rolls[0].result.total
+                total = evt.data!.rolls![0].result!.total
             }
         };
     }

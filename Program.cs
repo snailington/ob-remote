@@ -20,10 +20,10 @@ try {
     var cmd = (ICommand?)Activator.CreateInstance(cmdInfo.Type);
     if(cmd == null) { PrintHelp(); Environment.Exit(1); return 1; }
     cmd.Execute(new List<string>(args), null);
-} catch(ArgumentOutOfRangeException e) {
+} catch(ArgumentOutOfRangeException) {
     PrintShortHelp(cmdInfo.Attribute);
     return 2;
-} catch(NotImplementedException _) {
+} catch(NotImplementedException) {
     Console.Error.WriteLine($"{args[0]} not implemented");
     return 3;
 } catch(AuthenticationException e) {
